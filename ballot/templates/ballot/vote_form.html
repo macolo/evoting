@@ -65,6 +65,16 @@
             border-radius: 4px;
             font-size: 14px;
         }
+        input[type="text"]:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+        }
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .abstain-option {
+            margin-top: 10px;
+        }
         .radio-option {
             margin-bottom: 8px;
         }
@@ -85,6 +95,22 @@
             color: red;
         }
     </style>
+    <script>
+        function toggleAbstain(voteId) {
+            const textInput = document.getElementById('text_' + voteId);
+            const abstainCheckbox = document.getElementById('abstain_' + voteId);
+            
+            if (abstainCheckbox.checked) {
+                textInput.disabled = true;
+                textInput.value = 'abstain';
+                textInput.required = false;
+            } else {
+                textInput.disabled = false;
+                textInput.value = '';
+                textInput.required = true;
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -129,7 +155,13 @@
                 
                 {% elif vote.vote_type == 'short_text' %}
                     <div class="form-group">
-                        <input type="text" name="vote_{{ vote.id }}" placeholder="Enter your response..." required>
+                        <input type="text" name="vote_{{ vote.id }}" id="text_{{ vote.id }}" placeholder="Enter your response..." required>
+                        <div class="abstain-option">
+                            <label>
+                                <input type="checkbox" id="abstain_{{ vote.id }}" onchange="toggleAbstain({{ vote.id }})">
+                                Abstain
+                            </label>
+                        </div>
                     </div>
                 
                 {% elif vote.vote_type == 'radio' %}
