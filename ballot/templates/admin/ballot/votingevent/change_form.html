@@ -1,0 +1,31 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    
+    {% if show_invite_button %}
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Send Invitations & Open Voting' %}" class="default" name="_invite_members" style="background-color: #417690; margin-right: 10px;">
+        </div>
+    {% endif %}
+    
+    {% if show_generate_report_button %}
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Generate Voting Report' %}" class="default" name="_generate_report" style="background-color: #28a745; margin-right: 10px;">
+        </div>
+    {% endif %}
+    
+    {% if existing_reports %}
+        <div class="submit-row">
+            <h3>{% trans 'Existing Reports' %}</h3>
+            {% for report in existing_reports %}
+                <p>
+                    <a href="{% url 'admin:ballot_votingreport_change' report.pk %}" class="button">
+                        {% trans 'View Report' %} - {{ report.created_at|date:"Y-m-d H:i" }}
+                    </a>
+                </p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
