@@ -101,6 +101,7 @@
         
         function toggleAbstain(voteId) {
             const textInput = document.getElementById('text_' + voteId);
+            const hiddenInput = document.getElementById('hidden_' + voteId);
             const abstainCheckbox = document.getElementById('abstain_' + voteId);
             
             if (abstainCheckbox.checked) {
@@ -109,11 +110,15 @@
                 textInput.disabled = true;
                 textInput.value = 'abstain';
                 textInput.required = false;
+                // Set hidden field to abstain so it gets submitted
+                hiddenInput.value = 'abstain';
             } else {
                 textInput.disabled = false;
                 // Restore the original value, or empty string if none was stored
                 textInput.value = originalValues[voteId] || '';
                 textInput.required = true;
+                // Clear hidden field
+                hiddenInput.value = '';
             }
         }
     </script>
@@ -162,6 +167,7 @@
                 {% elif vote.vote_type == 'short_text' %}
                     <div class="form-group">
                         <input type="text" name="vote_{{ vote.id }}" id="text_{{ vote.id }}" placeholder="Enter your response..." value="{% if vote.type_specific_data and vote.type_specific_data.default_value %}{{ vote.type_specific_data.default_value }}{% endif %}" required>
+                        <input type="hidden" name="vote_{{ vote.id }}_hidden" id="hidden_{{ vote.id }}" value="">
                         <div class="abstain-option">
                             <label>
                                 <input type="checkbox" id="abstain_{{ vote.id }}" onchange="toggleAbstain({{ vote.id }})">

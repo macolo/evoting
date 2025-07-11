@@ -70,8 +70,14 @@ def submit_vote(request, token):
     
     for vote in votes:
         field_name = f'vote_{vote.id}'
-        # Always include the field, even if empty
-        submission_data[str(vote.id)] = request.POST.get(field_name, '')
+        hidden_field_name = f'vote_{vote.id}_hidden'
+        
+        # For short_text votes, check if abstain was selected via hidden field
+        if vote.vote_type == 'short_text' and request.POST.get(hidden_field_name):
+            submission_data[str(vote.id)] = request.POST.get(hidden_field_name)
+        else:
+            # Always include the field, even if empty
+            submission_data[str(vote.id)] = request.POST.get(field_name, '')
     
     # Create the submission
     Submission.objects.create(
