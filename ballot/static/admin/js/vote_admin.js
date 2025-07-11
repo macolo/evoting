@@ -23,4 +23,4 @@
             toggleDefaultValueField();
         });
     });
-})(django.jQuery);
+})(window.django ? django.jQuery : jQuery);
