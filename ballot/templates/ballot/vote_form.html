@@ -155,7 +155,7 @@
                 
                 {% elif vote.vote_type == 'short_text' %}
                     <div class="form-group">
-                        <input type="text" name="vote_{{ vote.id }}" id="text_{{ vote.id }}" placeholder="Enter your response..." value="{{ vote.type_specific_data.default_value|default:'' }}" required>
+                        <input type="text" name="vote_{{ vote.id }}" id="text_{{ vote.id }}" placeholder="Enter your response..." value="{% if vote.type_specific_data and vote.type_specific_data.default_value %}{{ vote.type_specific_data.default_value }}{% endif %}" required>
                         <div class="abstain-option">
                             <label>
                                 <input type="checkbox" id="abstain_{{ vote.id }}" onchange="toggleAbstain({{ vote.id }})">

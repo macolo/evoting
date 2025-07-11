@@ -244,11 +244,16 @@ class VoteAdminForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         
+        # Initialize type_specific_data if it doesn't exist
+        if not instance.type_specific_data:
+            instance.type_specific_data = {}
+        
         # Handle default_value for short_text vote type
         if self.cleaned_data.get('vote_type') == 'short_text':
-            if not instance.type_specific_data:
-                instance.type_specific_data = {}
             instance.type_specific_data['default_value'] = self.cleaned_data.get('default_value', '')
+        else:
+            # Remove default_value if vote type is not short_text
+            instance.type_specific_data.pop('default_value', None)
         
         if commit:
             instance.save()
