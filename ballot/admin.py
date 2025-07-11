@@ -99,6 +99,7 @@ class VotingEventAdmin(admin.ModelAdmin):
         messages.success(request, f'Voting report generated successfully.')
         return HttpResponseRedirect(reverse('admin:ballot_votingreport_change', args=[report.pk]))
     
+    
     def existing_reports_display(self, obj):
         """Display existing reports as a readonly field"""
         if not obj.pk:
