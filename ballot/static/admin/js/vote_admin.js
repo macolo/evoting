@@ -1,26 +1,34 @@
-(function($) {
+document.addEventListener('DOMContentLoaded', function() {
     'use strict';
     
     function toggleDefaultValueField() {
-        var voteType = $('#id_vote_type').val();
-        var defaultValueRow = $('.field-default_value');
+        var voteTypeField = document.getElementById('id_vote_type');
+        var defaultValueRow = document.querySelector('.field-default_value');
+        
+        if (!voteTypeField || !defaultValueRow) {
+            return;
+        }
+        
+        var voteType = voteTypeField.value;
         
         if (voteType === 'short_text') {
-            defaultValueRow.show();
+            defaultValueRow.style.display = '';
         } else {
-            defaultValueRow.hide();
+            defaultValueRow.style.display = 'none';
             // Clear the field when hidden
-            $('#id_default_value').val('');
+            var defaultValueField = document.getElementById('id_default_value');
+            if (defaultValueField) {
+                defaultValueField.value = '';
+            }
         }
     }
     
-    $(document).ready(function() {
-        // Initial state
-        toggleDefaultValueField();
-        
-        // Listen for changes to vote_type
-        $(document).on('change', '#id_vote_type', function() {
-            toggleDefaultValueField();
-        });
-    });
-})(window.django ? django.jQuery : jQuery);
+    // Initial state
+    toggleDefaultValueField();
+    
+    // Listen for changes to vote_type
+    var voteTypeField = document.getElementById('id_vote_type');
+    if (voteTypeField) {
+        voteTypeField.addEventListener('change', toggleDefaultValueField);
+    }
+});
