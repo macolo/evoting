@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
     
+    var previousVoteType = null;
+    
     function toggleDefaultValueField() {
         var voteTypeField = document.getElementById('id_vote_type');
         var defaultValueRow = document.querySelector('.field-default_value');
@@ -15,20 +17,23 @@ document.addEventListener('DOMContentLoaded', function() {
             defaultValueRow.style.display = '';
         } else {
             defaultValueRow.style.display = 'none';
-            // Clear the field when hidden
-            var defaultValueField = document.getElementById('id_default_value');
-            if (defaultValueField) {
-                defaultValueField.value = '';
+            // Only clear the field when changing FROM short_text TO another type
+            if (previousVoteType === 'short_text') {
+                var defaultValueField = document.getElementById('id_default_value');
+                if (defaultValueField) {
+                    defaultValueField.value = '';
+                }
             }
         }
+        
+        previousVoteType = voteType;
     }
     
-    // Initial state
-    toggleDefaultValueField();
-    
-    // Listen for changes to vote_type
+    // Set initial previous vote type and toggle field
     var voteTypeField = document.getElementById('id_vote_type');
     if (voteTypeField) {
+        previousVoteType = voteTypeField.value;
+        toggleDefaultValueField();
         voteTypeField.addEventListener('change', toggleDefaultValueField);
     }
 });
