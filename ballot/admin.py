@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from .models import VotingEvent, Vote, Member, Submission, VotingReport
+from .models import VotingEvent, Vote, Member, Submission, VotingReport, VotingEventInvitation
 import json
 
 
@@ -68,10 +68,21 @@ class VotingEventAdmin(admin.ModelAdmin):
         return super().response_change(request, obj)
     
     def invite_members(self, request, voting_event):
+        # Create invitations for all members
+        created_count = 0
+        for member in voting_event.members.all():
+            invitation, created = VotingEventInvitation.objects.get_or_create(
+                voting_event=voting_event,
+                member=member
+            )
+            if created:
+                created_count += 1
+        
         # TODO: Implement Brevo email sending logic
         voting_event.state = 'open'
         voting_event.save()
-        messages.success(request, f'Invitations sent to {voting_event.members.count()} members. Voting event is now open.')
+        
+        messages.success(request, f'Created {created_count} new invitations. Voting event is now open.')
         return HttpResponseRedirect(request.path)
     
     def generate_report(self, request, voting_event):
@@ -174,6 +185,41 @@ class SubmissionAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False  # Submissions are created through the voting interface
+
+
+@admin.register(VotingEventInvitation)
+class VotingEventInvitationAdmin(admin.ModelAdmin):
+    list_display = ['member', 'voting_event', 'created_at', 'used_at', 'is_used']
+    list_filter = ['voting_event', 'created_at', 'used_at']
+    search_fields = ['member__name', 'member__email', 'voting_event__title', 'secret']
+    readonly_fields = ['secret', 'created_at', 'used_at', 'voting_link']
+    
+    fieldsets = (
+        (None, {
+            'fields': ('voting_event', 'member')
+        }),
+        ('Token Information', {
+            'fields': ('secret', 'voting_link'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'used_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def is_used(self, obj):
+        return obj.used_at is not None
+    is_used.boolean = True
+    is_used.short_description = 'Used'
+    
+    def voting_link(self, obj):
+        if obj.secret:
+            from django.urls import reverse
+            url = reverse('ballot:vote', args=[obj.secret])
+            return format_html('<a href="{}" target="_blank">{}</a>', url, url)
+        return "No link available"
+    voting_link.short_description = 'Voting Link'
 
 
 @admin.register(VotingReport)
