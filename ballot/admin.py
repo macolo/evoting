@@ -261,14 +261,11 @@ class VoteAdmin(admin.ModelAdmin):
     list_display = ['title', 'voting_event', 'vote_type']
     list_filter = ['vote_type', 'voting_event']
     search_fields = ['title', 'description']
+    readonly_fields = ['type_specific_data']
     
     fieldsets = (
         (None, {
-            'fields': ('voting_event', 'title', 'description', 'vote_type', 'default_value')
-        }),
-        ('Type-specific Configuration', {
-            'fields': ('type_specific_data',),
-            'description': 'JSON configuration for vote type (e.g., radio button options, default values)'
+            'fields': ('voting_event', 'title', 'description', 'vote_type', 'default_value', 'type_specific_data')
         }),
     )
     
