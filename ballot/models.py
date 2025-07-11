@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.utils.crypto import get_random_string
 import json
-import base64
+import uuid
 
 
 class Member(models.Model):
@@ -32,22 +32,6 @@ class VotingEvent(models.Model):
     def __str__(self):
         return self.title
     
-    def generate_member_token(self, member):
-        """Generate a token for a specific member to vote in this event"""
-        token_data = f"{self.id}:{member.id}:{get_random_string(16)}"
-        return base64.urlsafe_b64encode(token_data.encode()).decode()
-    
-    @staticmethod
-    def decode_token(token):
-        """Decode a token to get voting_event_id and member_id"""
-        try:
-            decoded = base64.urlsafe_b64decode(token.encode()).decode()
-            parts = decoded.split(':')
-            if len(parts) >= 2:
-                return int(parts[0]), int(parts[1])
-        except (ValueError, TypeError):
-            pass
-        return None, None
     
     class Meta:
         ordering = ['-created_at']
@@ -78,6 +62,26 @@ class Submission(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='submissions')
     submission_data = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.member.name} - {self.voting_event.title}"
+    
+    class Meta:
+        unique_together = ['voting_event', 'member']
+        ordering = ['-created_at']
+
+
+class VotingEventInvitation(models.Model):
+    voting_event = models.ForeignKey(VotingEvent, on_delete=models.CASCADE, related_name='invitations')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='invitations')
+    secret = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.secret:
+            self.secret = str(uuid.uuid4())
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.member.name} - {self.voting_event.title}"

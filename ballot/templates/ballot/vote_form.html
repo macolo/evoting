@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ voting_event.title }} - Voting</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .member-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .vote-item {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .vote-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .vote-description {
+            margin-bottom: 15px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="radio"] {
+            margin-right: 8px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .radio-option {
+            margin-bottom: 8px;
+        }
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+        .required {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ voting_event.title }}</h1>
+        
+        <div class="member-info">
+            <strong>Voting as:</strong> {{ member.name }} ({{ member.email }})
+        </div>
+
+        <form method="post" action="{% url 'ballot:submit_vote' token %}">
+            {% csrf_token %}
+            
+            {% for vote in votes %}
+            <div class="vote-item">
+                <div class="vote-title">{{ vote.title }}</div>
+                
+                {% if vote.description %}
+                <div class="vote-description">{{ vote.description }}</div>
+                {% endif %}
+                
+                {% if vote.vote_type == 'simple' %}
+                    <div class="form-group">
+                        <div class="radio-option">
+                            <label>
+                                <input type="radio" name="vote_{{ vote.id }}" value="agree" required>
+                                Agree
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <label>
+                                <input type="radio" name="vote_{{ vote.id }}" value="disagree" required>
+                                Disagree
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <label>
+                                <input type="radio" name="vote_{{ vote.id }}" value="abstain" required>
+                                Abstain
+                            </label>
+                        </div>
+                    </div>
+                
+                {% elif vote.vote_type == 'short_text' %}
+                    <div class="form-group">
+                        <input type="text" name="vote_{{ vote.id }}" placeholder="Enter your response..." required>
+                    </div>
+                
+                {% elif vote.vote_type == 'radio' %}
+                    <div class="form-group">
+                        {% for option in vote.type_specific_data.options %}
+                        <div class="radio-option">
+                            <label>
+                                <input type="radio" name="vote_{{ vote.id }}" value="{{ option }}" required>
+                                {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="submit-btn">Submit Vote</button>
+        </form>
+    </div>
+</body>
+</html>

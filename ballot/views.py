@@ -4,21 +4,17 @@ from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
-from .models import VotingEvent, Member, Submission, Vote
+from .models import VotingEvent, Member, Submission, Vote, VotingEventInvitation
 import json
 
 
 def vote_view(request, token):
     """Display the voting form for a member with a valid token"""
-    # Decode the token to get voting event and member
-    voting_event_id, member_id = VotingEvent.decode_token(token)
+    # Get the invitation by token
+    invitation = get_object_or_404(VotingEventInvitation, secret=token)
     
-    if not voting_event_id or not member_id:
-        return HttpResponse("Invalid token", status=400)
-    
-    # Get the voting event and member
-    voting_event = get_object_or_404(VotingEvent, pk=voting_event_id)
-    member = get_object_or_404(Member, pk=member_id)
+    voting_event = invitation.voting_event
+    member = invitation.member
     
     # Check if voting event is open
     if voting_event.state != 'open':
@@ -50,15 +46,11 @@ def submit_vote(request, token):
     if request.method != 'POST':
         return redirect('ballot:vote', token=token)
     
-    # Decode the token to get voting event and member
-    voting_event_id, member_id = VotingEvent.decode_token(token)
+    # Get the invitation by token
+    invitation = get_object_or_404(VotingEventInvitation, secret=token)
     
-    if not voting_event_id or not member_id:
-        return HttpResponse("Invalid token", status=400)
-    
-    # Get the voting event and member
-    voting_event = get_object_or_404(VotingEvent, pk=voting_event_id)
-    member = get_object_or_404(Member, pk=member_id)
+    voting_event = invitation.voting_event
+    member = invitation.member
     
     # Check if voting event is open
     if voting_event.state != 'open':
@@ -87,6 +79,11 @@ def submit_vote(request, token):
         member=member,
         submission_data=submission_data
     )
+    
+    # Mark invitation as used
+    from django.utils import timezone
+    invitation.used_at = timezone.now()
+    invitation.save()
     
     messages.success(request, 'Your vote has been submitted successfully!')
     return redirect('ballot:vote_success', voting_event_id=voting_event.id)
