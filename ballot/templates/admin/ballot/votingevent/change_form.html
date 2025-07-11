@@ -16,16 +16,4 @@
         </div>
     {% endif %}
     
-    {% if existing_reports %}
-        <div class="submit-row">
-            <h3>{% trans 'Existing Reports' %}</h3>
-            {% for report in existing_reports %}
-                <p>
-                    <a href="{% url 'admin:ballot_votingreport_change' report.pk %}" class="button">
-                        {% trans 'View Report' %} - {{ report.created_at|date:"Y-m-d H:i" }}
-                    </a>
-                </p>
-            {% endfor %}
-        </div>
-    {% endif %}
 {% endblock %}

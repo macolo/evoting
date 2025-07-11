@@ -22,7 +22,7 @@ class VotingEventAdmin(admin.ModelAdmin):
     list_filter = ['state', 'created_at']
     search_fields = ['title']
     filter_horizontal = ['members']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'existing_reports_display']
     
     fieldsets = (
         (None, {
@@ -30,6 +30,9 @@ class VotingEventAdmin(admin.ModelAdmin):
         }),
         ('Members', {
             'fields': ('members',)
+        }),
+        ('Reports', {
+            'fields': ('existing_reports_display',),
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -56,7 +59,6 @@ class VotingEventAdmin(admin.ModelAdmin):
         # Add custom buttons context
         extra_context['show_invite_button'] = voting_event.state == 'closed' and voting_event.members.exists()
         extra_context['show_generate_report_button'] = voting_event.submissions.exists()
-        extra_context['existing_reports'] = voting_event.reports.all()
         
         return super().change_view(request, object_id, form_url, extra_context)
     
@@ -96,6 +98,25 @@ class VotingEventAdmin(admin.ModelAdmin):
         
         messages.success(request, f'Voting report generated successfully.')
         return HttpResponseRedirect(reverse('admin:ballot_votingreport_change', args=[report.pk]))
+    
+    def existing_reports_display(self, obj):
+        """Display existing reports as a readonly field"""
+        if not obj.pk:
+            return "No reports available for new voting events."
+        
+        reports = obj.reports.all()
+        if not reports:
+            return "No reports generated yet."
+        
+        html_parts = []
+        for report in reports:
+            url = reverse('admin:ballot_votingreport_change', args=[report.pk])
+            html_parts.append(
+                f'<p><a href="{url}" class="button">View Report - {report.created_at.strftime("%Y-%m-%d %H:%M")}</a></p>'
+            )
+        
+        return format_html(''.join(html_parts))
+    existing_reports_display.short_description = 'Existing Reports'
     
     def _generate_report_data(self, voting_event):
         """Generate the JSON report data structure"""
