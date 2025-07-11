@@ -27,10 +27,22 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-354p$mas_0n@$p144=j*%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = [
-    os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(','),
-    os.environ.get('DOMAIN')  # for divio.com deployments
-]
+# Build ALLOWED_HOSTS list safely
+ALLOWED_HOSTS = []
+
+# Add hosts from ALLOWED_HOSTS environment variable
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+if allowed_hosts_env:
+    ALLOWED_HOSTS.extend([host.strip() for host in allowed_hosts_env.split(',') if host.strip()])
+
+# Add Divio domain if present
+domain = os.environ.get('DOMAIN')
+if domain and domain.strip():
+    ALLOWED_HOSTS.append(domain.strip())
+
+# Ensure we always have localhost for development
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
