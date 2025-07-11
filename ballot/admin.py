@@ -16,20 +16,12 @@ class MemberAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
-class VoteInline(admin.TabularInline):
-    model = Vote
-    extra = 0
-    fields = ['title', 'description', 'vote_type', 'type_specific_data']
-    readonly_fields = []
-
-
 @admin.register(VotingEvent)
 class VotingEventAdmin(admin.ModelAdmin):
     list_display = ['title', 'state', 'created_at', 'member_count', 'vote_count', 'submission_count']
     list_filter = ['state', 'created_at']
     search_fields = ['title']
     filter_horizontal = ['members']
-    inlines = [VoteInline]
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
