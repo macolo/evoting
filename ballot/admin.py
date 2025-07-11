@@ -28,15 +28,15 @@ class VotingEventAdmin(admin.ModelAdmin):
         (None, {
             'fields': ('title', 'state')
         }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
         ('Members', {
             'fields': ('members',)
         }),
         ('Reports', {
             'fields': ('existing_reports_display',),
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
         }),
     )
     
