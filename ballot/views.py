@@ -70,8 +70,8 @@ def submit_vote(request, token):
     
     for vote in votes:
         field_name = f'vote_{vote.id}'
-        if field_name in request.POST:
-            submission_data[str(vote.id)] = request.POST[field_name]
+        # Always include the field, even if empty
+        submission_data[str(vote.id)] = request.POST.get(field_name, '')
     
     # Create the submission
     Submission.objects.create(
