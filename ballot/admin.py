@@ -41,18 +41,35 @@ class VotingEventAdmin(admin.ModelAdmin):
     )
     
     def member_count(self, obj):
+        """
+        Display the number of members associated with a voting event in the admin list view.
+        This method counts all members linked to the voting event through the many-to-many relationship.
+        """
         return obj.members.count()
     member_count.short_description = 'Members'
     
     def vote_count(self, obj):
+        """
+        Display the number of votes (questions) configured for a voting event in the admin list view.
+        This counts all Vote objects that belong to this voting event, representing the different questions or items to vote on.
+        """
         return obj.votes.count()
     vote_count.short_description = 'Votes'
     
     def submission_count(self, obj):
+        """
+        Display the number of member submissions received for a voting event in the admin list view.
+        This counts all completed voting submissions from members, indicating how many people have actually voted.
+        """
         return obj.submissions.count()
     submission_count.short_description = 'Submissions'
     
     def change_view(self, request, object_id, form_url='', extra_context=None):
+        """
+        Override the default change view to add custom context for conditional button display.
+        This method determines which custom action buttons should be shown based on the voting event's state and data.
+        It shows the invite button only when the event is closed and has members, and the generate report button only when submissions exist.
+        """
         extra_context = extra_context or {}
         voting_event = get_object_or_404(VotingEvent, pk=object_id)
         
@@ -63,6 +80,11 @@ class VotingEventAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
     
     def response_change(self, request, obj):
+        """
+        Handle custom form submissions from the voting event admin page.
+        This method intercepts POST requests to check for custom button actions (invite members or generate report)
+        and routes them to the appropriate handler methods, otherwise falls back to default Django admin behavior.
+        """
         if "_invite_members" in request.POST:
             return self.invite_members(request, obj)
         elif "_generate_report" in request.POST:
@@ -70,6 +92,12 @@ class VotingEventAdmin(admin.ModelAdmin):
         return super().response_change(request, obj)
     
     def invite_members(self, request, voting_event):
+        """
+        Create voting invitations for all members and open the voting event.
+        This method generates unique invitation tokens for each member associated with the voting event,
+        changes the event state to 'open', and provides feedback on how many new invitations were created.
+        Future enhancement will include sending invitation emails via Brevo API.
+        """
         # Create invitations for all members
         created_count = 0
         for member in voting_event.members.all():
@@ -88,6 +116,11 @@ class VotingEventAdmin(admin.ModelAdmin):
         return HttpResponseRedirect(request.path)
     
     def generate_report(self, request, voting_event):
+        """
+        Generate a comprehensive voting report for the current voting event.
+        This method creates a detailed JSON report containing vote structures, all member submissions,
+        and statistical summaries, then saves it as a VotingReport object and redirects to view the report.
+        """
         # Generate the voting report
         report_data = self._generate_report_data(voting_event)
         
@@ -101,7 +134,11 @@ class VotingEventAdmin(admin.ModelAdmin):
     
     
     def existing_reports_display(self, obj):
-        """Display existing reports as a readonly field"""
+        """
+        Display existing voting reports as clickable links in the admin form.
+        This readonly field shows all previously generated reports for the voting event as styled buttons
+        that link directly to the report detail pages, making it easy to access historical voting data.
+        """
         if not obj.pk:
             return "No reports available for new voting events."
         
@@ -120,7 +157,12 @@ class VotingEventAdmin(admin.ModelAdmin):
     existing_reports_display.short_description = 'Existing Reports'
     
     def _generate_report_data(self, voting_event):
-        """Generate the JSON report data structure"""
+        """
+        Generate comprehensive JSON report data structure for a voting event.
+        This private method creates a detailed report containing vote configurations, all member submissions,
+        and statistical summaries including both raw counts and weighted results based on membership weights.
+        The report structure includes vote metadata, individual responses, and aggregated statistics.
+        """
         report = {
             "Id": str(voting_event.id),
             "voting_event_id": str(voting_event.id),
@@ -206,6 +248,11 @@ class SubmissionAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at']
     
     def has_add_permission(self, request):
+        """
+        Prevent manual creation of submissions through the admin interface.
+        Submissions should only be created through the public voting interface to ensure proper validation,
+        token verification, and business logic enforcement.
+        """
         return False  # Submissions are created through the voting interface
 
 
@@ -231,11 +278,21 @@ class VotingEventInvitationAdmin(admin.ModelAdmin):
     )
     
     def is_used(self, obj):
+        """
+        Display whether a voting invitation has been used in the admin list view.
+        This method checks if the invitation has a 'used_at' timestamp, indicating that the member
+        has successfully submitted their vote using this invitation token.
+        """
         return obj.used_at is not None
     is_used.boolean = True
     is_used.short_description = 'Used'
     
     def voting_link(self, obj):
+        """
+        Generate and display the voting URL for an invitation in the admin interface.
+        This method creates a clickable link using the invitation's secret token that opens
+        the voting form in a new tab, allowing administrators to easily access and test voting links.
+        """
         if obj.secret:
             from django.urls import reverse
             url = reverse('ballot:vote', args=[obj.secret])
@@ -261,10 +318,20 @@ class VotingReportAdmin(admin.ModelAdmin):
     )
     
     def formatted_report_data(self, obj):
+        """
+        Display the JSON report data in a readable, formatted way in the admin interface.
+        This method takes the raw JSON report data and formats it with proper indentation
+        and syntax highlighting within a preformatted text block for easy reading and analysis.
+        """
         if obj.report_data:
             return format_html('<pre>{}</pre>', json.dumps(obj.report_data, indent=2))
         return "No data"
     formatted_report_data.short_description = 'Report Data (Formatted)'
     
     def has_add_permission(self, request):
+        """
+        Prevent manual creation of voting reports through the admin interface.
+        Reports should only be generated through the VotingEvent admin using the 'Generate Report' button
+        to ensure proper data collection, formatting, and consistency.
+        """
         return False  # Reports are generated through VotingEvent admin
