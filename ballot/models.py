@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils.crypto import get_random_string
 import json
+import base64
 
 
 class Member(models.Model):
@@ -29,6 +31,23 @@ class VotingEvent(models.Model):
     
     def __str__(self):
         return self.title
+    
+    def generate_member_token(self, member):
+        """Generate a token for a specific member to vote in this event"""
+        token_data = f"{self.id}:{member.id}:{get_random_string(16)}"
+        return base64.urlsafe_b64encode(token_data.encode()).decode()
+    
+    @staticmethod
+    def decode_token(token):
+        """Decode a token to get voting_event_id and member_id"""
+        try:
+            decoded = base64.urlsafe_b64decode(token.encode()).decode()
+            parts = decoded.split(':')
+            if len(parts) >= 2:
+                return int(parts[0]), int(parts[1])
+        except (ValueError, TypeError):
+            pass
+        return None, None
     
     class Meta:
         ordering = ['-created_at']
