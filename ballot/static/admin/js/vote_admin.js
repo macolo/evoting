@@ -19,7 +19,7 @@
         toggleDefaultValueField();
         
         // Listen for changes to vote_type
-        $('#id_vote_type').change(function() {
+        $(document).on('change', '#id_vote_type', function() {
             toggleDefaultValueField();
         });
     });
