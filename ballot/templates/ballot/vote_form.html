@@ -96,17 +96,23 @@
         }
     </style>
     <script>
+        // Store original values for each input field
+        const originalValues = {};
+        
         function toggleAbstain(voteId) {
             const textInput = document.getElementById('text_' + voteId);
             const abstainCheckbox = document.getElementById('abstain_' + voteId);
             
             if (abstainCheckbox.checked) {
+                // Store the current value before changing to abstain
+                originalValues[voteId] = textInput.value;
                 textInput.disabled = true;
                 textInput.value = 'abstain';
                 textInput.required = false;
             } else {
                 textInput.disabled = false;
-                textInput.value = '';
+                // Restore the original value, or empty string if none was stored
+                textInput.value = originalValues[voteId] || '';
                 textInput.required = true;
             }
         }
