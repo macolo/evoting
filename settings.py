@@ -44,6 +44,19 @@ if domain and domain.strip():
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# CSRF trusted origins for Divio deployment
+CSRF_TRUSTED_ORIGINS = []
+
+# Add HTTPS version of allowed hosts to CSRF trusted origins
+for host in ALLOWED_HOSTS:
+    if host not in ['localhost', '127.0.0.1']:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
+
+# Add any additional trusted origins from environment
+csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in csrf_origins_env.split(',') if origin.strip()])
+
 
 # Application definition
 
