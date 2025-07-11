@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
+from django import forms
 from .models import VotingEvent, Vote, Member, Submission, VotingReport, VotingEventInvitation
 import json
 
@@ -223,21 +224,56 @@ class VotingEventAdmin(admin.ModelAdmin):
         return report
 
 
+class VoteAdminForm(forms.ModelForm):
+    default_value = forms.CharField(
+        max_length=500,
+        required=False,
+        help_text="Default value for short text input fields"
+    )
+    
+    class Meta:
+        model = Vote
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Populate default_value field from type_specific_data if it exists
+        if self.instance and self.instance.pk and self.instance.type_specific_data:
+            self.fields['default_value'].initial = self.instance.type_specific_data.get('default_value', '')
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Handle default_value for short_text vote type
+        if self.cleaned_data.get('vote_type') == 'short_text':
+            if not instance.type_specific_data:
+                instance.type_specific_data = {}
+            instance.type_specific_data['default_value'] = self.cleaned_data.get('default_value', '')
+        
+        if commit:
+            instance.save()
+        return instance
+
+
 @admin.register(Vote)
 class VoteAdmin(admin.ModelAdmin):
+    form = VoteAdminForm
     list_display = ['title', 'voting_event', 'vote_type']
     list_filter = ['vote_type', 'voting_event']
     search_fields = ['title', 'description']
     
     fieldsets = (
         (None, {
-            'fields': ('voting_event', 'title', 'description', 'vote_type')
+            'fields': ('voting_event', 'title', 'description', 'vote_type', 'default_value')
         }),
         ('Type-specific Configuration', {
             'fields': ('type_specific_data',),
             'description': 'JSON configuration for vote type (e.g., radio button options, default values)'
         }),
     )
+    
+    class Media:
+        js = ('admin/js/vote_admin.js',)
 
 
 @admin.register(Submission)
